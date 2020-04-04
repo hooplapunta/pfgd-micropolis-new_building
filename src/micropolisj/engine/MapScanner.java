@@ -42,7 +42,7 @@ class MapScanner extends TileBehavior
 		STADIUM_FULL,
 		AIRPORT,
 		SEAPORT,
-		NEW_BUILDING; //Placeholder enum for new building. Change to building name if making a new building
+		MEDICAL; //Placeholder enum for new building. Change to building name if making a new building
 	}
 
 	@Override
@@ -85,8 +85,8 @@ class MapScanner extends TileBehavior
 		case SEAPORT:
 			doSeaport();
 			return;
-		case NEW_BUILDING:
-			doNewBuilding(); //Call the NEW_BUILDING placeholder function
+		case MEDICAL:
+			doMedical(); //Call the NEW_BUILDING placeholder function
 			return;
 		default:
 			assert false;
@@ -208,15 +208,29 @@ class MapScanner extends TileBehavior
 		city.powerPlants.add(new CityLocation(xpos, ypos));
 	}
 	
-	//Placeholder for a new building
-	//Look to the other do<building name>() functions to guidance on what this function should do.
-	void doNewBuilding()
+	/** MEDICAL BUILDING MITIGATION **/
+	void doMedical()
 	{
-		//Very basic building functionality. Checks for power and does "repair"
 		boolean powerOn = checkZonePower();
+		city.medicalCount++;
 		if ((city.cityTime % 8) == 0) {
-			repairZone(NEW_BUILDING, 3);
+			repairZone(FIRESTATION, 3);
 		}
+
+		int z;
+		if (powerOn) {
+			z = city.medicalEffect;  //if powered, get effect
+		} else {
+			z = city.medicalEffect/2; // from the funding ratio
+		}
+
+		traffic.mapX = xpos;
+		traffic.mapY = ypos;
+		if (!traffic.findPerimeterRoad()) {
+			z /= 2;
+		}
+
+		city.medicalMap[ypos/8][xpos/8] += z;
 	}
 
 	void doFireStation()

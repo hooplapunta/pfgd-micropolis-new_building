@@ -90,6 +90,12 @@ public class Micropolis
 	/** For each 8x8 section of city, this is an integer between 0 and 64,
 	 * with higher numbers being closer to the center of the city. */
 	int [][] comRate;
+	
+	
+	/** VIRUS STUFF **/
+	public int [][] virusMap;
+	int [][] medicalMap;      			//hospitals - cleared and rebuilt each sim cycle
+	public int [][] medicalCoverage;   //hospitals reach- used for overlay graphs
 
 	static final int DEFAULT_WIDTH = 120;
 	static final int DEFAULT_HEIGHT = 100;
@@ -125,6 +131,10 @@ public class Micropolis
 	int nuclearCount;
 	int seaportCount;
 	int airportCount;
+	
+	/** VIRUS COUNTS **/
+	int virusPop;
+	int medicalCount;
 
 	int totalPop;
 	int lastCityPop;
@@ -135,6 +145,7 @@ public class Micropolis
 	int lastTotalPop;
 	int lastFireStationCount;
 	int lastPoliceCount;
+	int lastMedicalCount;
 
 	int trafficMaxLocationX;
 	int trafficMaxLocationY;
@@ -177,6 +188,7 @@ public class Micropolis
 	int roadEffect = 32;
 	int policeEffect = 1000;
 	int fireEffect = 1000;
+	int medicalEffect = 1000;
 
 	int cashFlow; //net change in totalFunds in previous year
 
@@ -246,6 +258,10 @@ public class Micropolis
 		policeMapEffect = new int[smY][smX];
 		fireRate = new int[smY][smX];
 		comRate = new int[smY][smX];
+		
+		virusMap = new int[height][width];
+		medicalMap = new int[smY][smX];
+		medicalCoverage = new int[smY][smX];
 
 		centerMassX = hX;
 		centerMassY = hY;
@@ -539,11 +555,16 @@ public class Micropolis
 		seaportCount = 0;
 		airportCount = 0;
 		powerPlants.clear();
+		
+		virusPop = 0; 
+		medicalCount = 0;
 
 		for (int y = 0; y < fireStMap.length; y++) {
 			for (int x = 0; x < fireStMap[y].length; x++) {
 				fireStMap[y][x] = 0;
 				policeMap[y][x] = 0;
+				
+				medicalMap[y][x] = 0;
 			}
 		}
 	}
@@ -648,6 +669,8 @@ public class Micropolis
 
 		case 15:
 			fireAnalysis();
+			medicalAnalysis();
+			virusAnalysis();
 			doDisasters();
 			break;
 
@@ -905,6 +928,7 @@ public class Micropolis
 			makeFlood();
 			break;
 		case 4:
+			makeVirus(true);
 			break;
 		case 5:
 			makeTornado();
@@ -953,6 +977,28 @@ public class Micropolis
 
 		fireMapOverlayDataChanged(MapState.FIRE_OVERLAY);
 	}
+	
+	void medicalAnalysis()
+	{
+		medicalMap = smoothFirePoliceMap(medicalMap);
+		medicalMap = smoothFirePoliceMap(medicalMap);
+		medicalMap = smoothFirePoliceMap(medicalMap);
+		for (int sy = 0; sy < medicalMap.length; sy++) {
+			for (int sx = 0; sx < medicalMap[sy].length; sx++) {
+				medicalCoverage[sy][sx] = medicalMap[sy][sx];
+			}
+		}
+
+		fireMapOverlayDataChanged(MapState.MEDICAL_OVERLAY);
+	}
+	
+	void virusAnalysis()
+	{
+		// no smoothing for now
+
+		fireMapOverlayDataChanged(MapState.VIRUS_OVERLAY);
+	}
+
 
 	private boolean testForCond(CityLocation loc, int dir)
 	{
@@ -1112,6 +1158,12 @@ public class Micropolis
 	{
 		return fireRate[ypos/8][xpos/8];
 	}
+	
+	/** Accessor method for medicalCoverage[]. */
+	public int getMedicalCoverage(int xpos, int ypos)
+	{
+		return medicalCoverage[ypos/8][xpos/8];
+	}
 
 	/** Accessor method for landValueMem overlay. */
 	public int getLandValue(int xpos, int ypos)
@@ -1267,6 +1319,7 @@ public class Micropolis
 		public int [] money = new int[240];
 		public int [] pollution = new int[240];
 		public int [] crime = new int[240];
+		public int [] virus = new int[240];
 		int resMax;
 		int comMax;
 		int indMax;
@@ -1461,13 +1514,15 @@ public class Micropolis
 		bb.put("INDUSTRIAL", new MapScanner(this, MapScanner.B.INDUSTRIAL));
 		bb.put("COAL", new MapScanner(this, MapScanner.B.COAL));
 		bb.put("NUCLEAR", new MapScanner(this, MapScanner.B.NUCLEAR));
-		bb.put("NEW_BUILDING", new MapScanner(this, MapScanner.B.NEW_BUILDING));
+
 		bb.put("FIRESTATION", new MapScanner(this, MapScanner.B.FIRESTATION));
 		bb.put("POLICESTATION", new MapScanner(this, MapScanner.B.POLICESTATION));
 		bb.put("STADIUM_EMPTY", new MapScanner(this, MapScanner.B.STADIUM_EMPTY));
 		bb.put("STADIUM_FULL", new MapScanner(this, MapScanner.B.STADIUM_FULL));
 		bb.put("AIRPORT", new MapScanner(this, MapScanner.B.AIRPORT));
 		bb.put("SEAPORT", new MapScanner(this, MapScanner.B.SEAPORT));
+		
+		bb.put("MEDICAL", new MapScanner(this, MapScanner.B.MEDICAL));
 
 		this.tileBehaviors = bb;
 	}
@@ -1731,6 +1786,8 @@ public class Micropolis
 		lastTotalPop = totalPop;
 		lastFireStationCount = fireStationCount;
 		lastPoliceCount = policeCount;
+		
+		lastMedicalCount = medicalCount;
 
 		BudgetNumbers b = generateBudget();
 
@@ -2289,6 +2346,33 @@ public class Micropolis
 				}
 			}
 		}
+	}
+	
+	/** CUSTOM VIRAL PANDEMIC DISASTER **/
+	public void makeVirus(boolean trySearch)
+	{
+		int t = 31;
+		if (trySearch) {
+			t = 0; // search repeatedly if enabled
+		}
+		
+		for (; t < 32; t++)
+		{
+			int x = PRNG.nextInt(getWidth());
+			int y = PRNG.nextInt(getHeight());
+			int tile = getTile(x, y);
+			
+			// virus only starts in zones, but can spread via transport
+			if (isZoneAny(tile)) 
+			{
+				setTile(x, y, (char)(FIRE + PRNG.nextInt(8)));
+				// add to virus layer
+				sendMessageAt(MicropolisMessage.VIRUS_REPORT, x, y);
+				return;
+			}
+		}
+		
+		// no location for virus found
 	}
 
 	/**

@@ -60,7 +60,10 @@ public enum MicropolisMessage
 	RIOTING_REPORT,
 
 	// added by Jason
-	NO_NUCLEAR_PLANTS;
+	NO_NUCLEAR_PLANTS,
+	
+	// FOR VIRAL PANDEMIC
+	VIRUS_REPORT; // 45
 
 	/** Whether the message should be displayed in the notification pane. */
 	public boolean useNotificationPane = false;
@@ -86,5 +89,8 @@ public enum MicropolisMessage
 	SHIPWRECK_REPORT.useNotificationPane = true;
 	COPTER_CRASH_REPORT.useNotificationPane = true;
 	PLANECRASH_REPORT.useNotificationPane = true;
+	
+	// even though you can't see the virus, show location as hint
+	VIRUS_REPORT.useNotificationPane = true;
 	}
 }

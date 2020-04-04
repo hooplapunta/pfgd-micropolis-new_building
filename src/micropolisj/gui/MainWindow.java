@@ -659,6 +659,17 @@ public class MainWindow extends JFrame
 		JMenu priorityMenu = new JMenu(strings.getString("menu.speed"));
 		setupKeys(priorityMenu, "menu.speed");
 		menuBar.add(priorityMenu);
+		
+		menuItem = new JMenuItem(strings.getString("menu.disasters.VIRUS"));
+		setupKeys(menuItem, "menu.disasters.VIRUS");
+		menuItem.addActionListener(wrapActionListener(
+			new ActionListener() {
+			public void actionPerformed(ActionEvent ev)
+			{
+				onInvokeDisasterClicked(Disaster.VIRUS);
+			}
+			}));
+		disastersMenu.add(menuItem);
 
 		priorityMenuItems = new EnumMap<Speed,JMenuItem>(Speed.class);
 		menuItem = new JRadioButtonMenuItem(strings.getString("menu.speed.SUPER_FAST"));
@@ -1548,6 +1559,9 @@ public class MainWindow extends JFrame
 		case EARTHQUAKE:
 			getEngine().makeEarthquake();
 			break;
+		case VIRUS:
+			getEngine().makeVirus(true);
+			break;	
 		default:
 			assert false; //unknown disaster
 		}
