@@ -192,6 +192,29 @@ public class OverlayMapView extends JComponent
 			}
 		}
 	}
+	
+	private void drawMedicalRadius(Graphics gr)
+	{
+		int [][] A = engine.medicalCoverage;
+
+		for (int y = 0; y < A.length; y++) {
+			for (int x = 0; x < A[y].length; x++) {
+				maybeDrawRect(gr, getCI(A[y][x]),x*24,y*24,24,24);
+			}
+		}
+	}
+	
+	private void drawVirus(Graphics gr)
+	{
+		int [][] A = engine.virusMap;
+
+		for (int y = 0; y < A.length; y++) {
+			for (int x = 0; x < A[y].length; x++) {
+				maybeDrawRect(gr, getCI(A[y][x]*100),x*3,y*3,3,3);
+			}
+		}
+	}
+
 
 	private void drawFireRadius(Graphics gr)
 	{
@@ -390,6 +413,12 @@ public class OverlayMapView extends JComponent
 			drawRateOfGrowth(gr); break;
 		case POPDEN_OVERLAY:
 			drawPopDensity(gr); break;
+			
+		case MEDICAL_OVERLAY:
+			drawMedicalRadius(gr); break;
+		case VIRUS_OVERLAY:
+			drawVirus(gr); break;
+			
 		default:
 		}
 

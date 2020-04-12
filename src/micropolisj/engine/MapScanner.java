@@ -92,6 +92,14 @@ class MapScanner extends TileBehavior
 			assert false;
 		}
 	}
+	
+	boolean checkVirus() {
+		if (city.virusMap[ypos][xpos] == 1) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 	boolean checkZonePower()
 	{
@@ -346,11 +354,13 @@ class MapScanner extends TileBehavior
 	 */
 	void makeHospital()
 	{
-		if (city.needHospital > 0)
-		{
-			zonePlop(HOSPITAL);
-			city.needHospital = 0;
-		}
+		// DISABLED - don't ever make a hospital
+		
+//		if (city.needHospital > 0)
+//		{
+//			zonePlop(HOSPITAL);
+//			city.needHospital = 0;
+//		}
 
 //FIXME- should be 'else if'
 		if (city.needChurch > 0)
@@ -479,6 +489,11 @@ class MapScanner extends TileBehavior
 
 			if (!powerOn)
 				zscore = -500;
+			
+			if (checkVirus() && PRNG.nextInt(1) == 0) {
+				// if there is a virus, full chance of decaying
+				zscore = -500;
+			}
 
 			if (trafficGood != 0 &&
 				zscore > -350 &&
@@ -532,6 +547,11 @@ class MapScanner extends TileBehavior
 
 			if (!powerOn)
 				zscore = -500;
+			
+			if (checkVirus() && PRNG.nextInt(1) == 0) {
+				// if there is a virus, full chance of decaying
+				zscore = -500;
+			}
 
 			if (zscore > -350 &&
 				zscore - 26380 > (PRNG.nextInt(0x10000)-0x8000))
@@ -594,6 +614,11 @@ class MapScanner extends TileBehavior
 
 			if (!powerOn)
 				zscore = -500;
+			
+			if (checkVirus() && PRNG.nextInt(1) == 0) {
+				// if there is a virus, full chance of decaying
+				zscore = -500;
+			}
 
 			if (zscore > -350 && zscore - 26380 > (PRNG.nextInt(0x10000)-0x8000))
 			{

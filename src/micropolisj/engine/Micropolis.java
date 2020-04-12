@@ -479,6 +479,15 @@ public class Micropolis
 	{
 		return (getTileRaw(xpos, ypos) & PWRBIT) == PWRBIT;
 	}
+	
+	public void setVirus(int xpos, int ypos, boolean hasVirus) {
+		
+		virusMap[ypos][xpos] = hasVirus ? 1 : 0;
+		// need to fireTileChanged?
+		fireTileChanged(xpos, ypos);
+		
+		// do so for now
+	}
 
 	/**
 	 * Note: this method clears the PWRBIT of the given location.
@@ -646,6 +655,9 @@ public class Micropolis
 			fireMapOverlayDataChanged(MapState.RESIDENTIAL);     //REMAP
 			fireMapOverlayDataChanged(MapState.COMMERCIAL);      //COMAP
 			fireMapOverlayDataChanged(MapState.INDUSTRIAL);      //INMAP
+			
+			
+			
 			doMessages();
 			break;
 
@@ -1523,6 +1535,8 @@ public class Micropolis
 		bb.put("SEAPORT", new MapScanner(this, MapScanner.B.SEAPORT));
 		
 		bb.put("MEDICAL", new MapScanner(this, MapScanner.B.MEDICAL));
+		
+		bb.put("VIRUS", new TerrainBehavior(this, TerrainBehavior.B.VIRUS));
 
 		this.tileBehaviors = bb;
 	}
@@ -1542,6 +1556,14 @@ public class Micropolis
 	{
 		int tile = getTile(xpos, ypos);
 		String behaviorStr = getTileBehavior(tile);
+		
+		// manual insertion of virus behavior
+		if (virusMap[ypos][xpos] == 1) {
+			// System.out.println("virus at:" +xpos +"," +ypos);
+			TileBehavior v = tileBehaviors.get("VIRUS");
+			v.processTile(xpos, ypos);
+		}
+		
 		if (behaviorStr == null) {
 			return; //nothing to do
 		}
@@ -1553,6 +1575,8 @@ public class Micropolis
 		else {
 			throw new Error("Unknown behavior: "+behaviorStr);
 		}
+		
+		
 	}
 
 	void generateShip()
@@ -2365,8 +2389,10 @@ public class Micropolis
 			// virus only starts in zones, but can spread via transport
 			if (isZoneAny(tile)) 
 			{
-				setTile(x, y, (char)(FIRE + PRNG.nextInt(8)));
+				// setTile(x, y, (char)(FIRE + PRNG.nextInt(8)));
 				// add to virus layer
+				setVirus(x, y, true);
+				
 				sendMessageAt(MicropolisMessage.VIRUS_REPORT, x, y);
 				return;
 			}
