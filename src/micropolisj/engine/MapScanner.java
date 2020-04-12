@@ -214,7 +214,7 @@ class MapScanner extends TileBehavior
 		boolean powerOn = checkZonePower();
 		city.medicalCount++;
 		if ((city.cityTime % 8) == 0) {
-			repairZone(FIRESTATION, 3);
+			repairZone(MEDICAL, 3);
 		}
 
 		int z;

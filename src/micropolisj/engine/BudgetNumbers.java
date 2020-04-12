@@ -27,6 +27,11 @@ public class BudgetNumbers
 	public int fireRequest;
 	public int fireFunded;
 	public double firePercent;
+	
+	// medical stuff
+	public int medicalRequest;
+	public int medicalFunded;
+	public double medicalPercent;
 
 	public int policeRequest;
 	public int policeFunded;
